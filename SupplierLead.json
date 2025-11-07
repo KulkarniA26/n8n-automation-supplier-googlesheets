@@ -1,0 +1,531 @@
+{
+  "name": "SupplierLead",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -2336,
+        -176
+      ],
+      "id": "468c245a-9957-42ff-bf56-33521f52fe37",
+      "name": "When chat message received",
+      "webhookId": "cd09a2dc-9325-41fa-a53b-1352f006cf61"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Behave like a Business Development Director and do the following tasks.\n\nSearch about the keyword {{ $('When chat message received').item.json.chatInput }} and find on the internet relevant websites that are selling the given product.\n\nDo not write a suggestive question after your response, or an introduction line before the prompt. \n\nMake sure you are capturing all the websites and also search very thoroughly if required, lists those websites and their name in a tabular format.\n\nAlso look for vendor websites or specialized vendor websites around the globe.\n\nExclude websites like amazon, flipkart, ebay. Find professional vendors or industrial vendors that will deal in bulk or give good price for small quantities.\n\nLook for them in regions like, India, Europe, USA, Middle East. \n\nList atleast 50 results, and maintain the quality of your resources.\n\nReturn the following information:\n\nWebsite Name \nWebsite URL \nEmail ID \nContact Person \nPhone Number (WITHOUT using country code sign) \nCountry Code \n\nDO NOT give numbering to your output.\n\nDO NOT use random characters to seperate the output. \n\nDO NOT use '|' or any other symbols to return the output.\n\nSTART YOUR RESPONSE with the first piece of information directly, which is the website name.\n\nDO NOT REPEAT the names of the HEADERS like 'Website Name',etc in your output.\n\nGive me directly the information in above format as instructed.\n\n\n\n",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -2304,
+        112
+      ],
+      "id": "bd03e583-4268-4263-8969-6e9fefd0a035",
+      "name": "Basic LLM Chain",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "companies",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -1856,
+        112
+      ],
+      "id": "4e393d9f-e0c1-475e-8391-25c09ec29d7b",
+      "name": "Split Out",
+      "retryOnFail": true,
+      "maxTries": 5
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f7835229-2281-47b2-b805-55f9d3f31ae0",
+              "name": "companies",
+              "value": "={{ $json.text.split('\\n\\n') }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -2016,
+        112
+      ],
+      "id": "d09b606e-3b58-4b97-b277-2e4476747c42",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "documentId": {
+          "__rl": true,
+          "value": "1AJ0-g_6HXdpc5B9GA_U04J5LgXq5zX01WecRrJL9Ufc",
+          "mode": "id"
+        },
+        "title": "={{ $('When chat message received').item.json.chatInput }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -2032,
+        -176
+      ],
+      "id": "5660c5e7-5e8d-4f19-954a-de6cc368cda5",
+      "name": "Create sheet",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "executeOnce": false,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "trLAfP25RE9K3U6v",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e3b22dda-97e4-4c52-9853-6e6cc9766803",
+              "name": "columns",
+              "value": "=Website Name,Website URL,Email ID,Contact Person,Phone Number,Country",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1888,
+        -176
+      ],
+      "id": "852cf7e7-7c52-4c4b-9c7a-f662721a2f44",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Split the comma-separated string from $json.rows\nconst headersArray = $json.columns.split(',');\n\n// Create an object where each key is a header (trimmed) and its value is the header text\nconst headersObject = {};\nheadersArray.forEach(header => {\n  const trimmedHeader = header.trim();\n  headersObject[trimmedHeader] = trimmedHeader;\n});\n\n// Return the object so that each header becomes a column in the first row of your sheet\nreturn [\n  {\n    json: headersObject\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1744,
+        -176
+      ],
+      "id": "b98be7d2-045d-4a6c-b696-b7b0af413859",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Create sheet').item.json.spreadsheetId }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "={{ $('Create sheet').item.json.title }}"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1600,
+        -176
+      ],
+      "id": "c3e83ee5-9f84-4162-8c71-fe511e1067fd",
+      "name": "HeaderCreate",
+      "retryOnFail": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "trLAfP25RE9K3U6v",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Create sheet').item.json.spreadsheetId }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('Create sheet').item.json.title }}",
+          "mode": "name"
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1456,
+        -176
+      ],
+      "id": "4673f08a-d904-4278-bc84-05b4c2bec51d",
+      "name": "ExtraRowRemove",
+      "retryOnFail": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "trLAfP25RE9K3U6v",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Create sheet').item.json.spreadsheetId }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "={{ $('Create sheet').item.json.title }}"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Website Name": "={{ $('FinalData').item.json[\"Website Name\"] }}",
+            "Website URL": "={{ $('FinalData').item.json['Website URL'] }}",
+            "Email ID": "={{ $('FinalData').item.json['Email ID'] }}",
+            "Contact Person": "={{ $('FinalData').item.json['Contact Person'] }}",
+            "Phone Number": "={{ $('FinalData').item.json['Phone Number'] }}",
+            "Country": "={{ $('FinalData').item.json.Country }}"
+          },
+          "matchingColumns": [
+            "Website Name"
+          ],
+          "schema": [
+            {
+              "id": "Website Name",
+              "displayName": "Website Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Website URL",
+              "displayName": "Website URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email ID",
+              "displayName": "Email ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Contact Person",
+              "displayName": "Contact Person",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Phone Number",
+              "displayName": "Phone Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Country",
+              "displayName": "Country",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1536,
+        112
+      ],
+      "id": "4fc5d1da-fe76-4c25-96be-23a68aab9b01",
+      "name": "MainDataInsert",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "trLAfP25RE9K3U6v",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "10c474fc-c89b-4ae4-a429-1de6d6d2d271",
+              "name": "Website Name",
+              "value": "={{ $json.companies.split('\\n')[0] }}",
+              "type": "string"
+            },
+            {
+              "id": "901ee1dd-a47a-4d49-b0bb-5782e63632e9",
+              "name": "Website URL",
+              "value": "={{ $json.companies.split('\\n')[1] }}",
+              "type": "string"
+            },
+            {
+              "id": "c0f1fd1b-257b-4bcb-a9b4-b183527f133d",
+              "name": "Email ID",
+              "value": "={{ $json.companies.split('\\n')[2] }}",
+              "type": "string"
+            },
+            {
+              "id": "b444995f-136b-4ac1-88b0-a7c2e363725e",
+              "name": "Contact Person",
+              "value": "={{ $json.companies.split('\\n')[3] }}",
+              "type": "string"
+            },
+            {
+              "id": "8f375ca9-57f8-43b5-bbe4-28d7eead5058",
+              "name": "Phone Number",
+              "value": "={{ $json.companies.split('\\n')[4] }}",
+              "type": "string"
+            },
+            {
+              "id": "3656c7a4-8738-4619-88c8-30388ae639fe",
+              "name": "Country",
+              "value": "={{ $json.companies.split('\\n')[5] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1712,
+        112
+      ],
+      "id": "8baec4ee-5672-440e-b7cc-2bbe87980572",
+      "name": "FinalData",
+      "retryOnFail": true,
+      "maxTries": 5
+    },
+    {
+      "parameters": {
+        "model": "llama3.2:3b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        -2304,
+        304
+      ],
+      "id": "e6a456df-9d87-4f9d-a7c4-7c5ff77043da",
+      "name": "Ollama Chat Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "nBQOqimqfpeYCXnL",
+          "name": "Ollama account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Create sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "FinalData",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create sheet": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HeaderCreate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HeaderCreate": {
+      "main": [
+        [
+          {
+            "node": "ExtraRowRemove",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ExtraRowRemove": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FinalData": {
+      "main": [
+        [
+          {
+            "node": "MainDataInsert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ef9bfe2a-47e8-4b0b-945f-915076f69e53",
+  "meta": {
+    "templateId": "self-building-ai-agent",
+    "templateCredsSetupCompleted": true,
+    "instanceId": "643e3eb7a029f9f1959e1561a67d477116fbc866f6a67a703f75610a3ab4de72"
+  },
+  "id": "eV2WVlUPurssh20F",
+  "tags": []
+}
