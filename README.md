@@ -131,3 +131,8 @@ n8n - Workflow automation platform
 Ollama - Local LLM infrastructure
 
 Google Sheets API - Data storage and collaboration
+
+📧 Contact
+Questions or feedback? Feel free to open an issue or reach out.​
+
+⭐ If this workflow saved you time, consider starring this repository!
